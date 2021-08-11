@@ -7,9 +7,9 @@ import wangxw.listener.MyEventListener;
 import wangxw.listener.MyEventProcesser;
 import wangxw.utils.PrintUtil;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
@@ -45,23 +45,63 @@ public class FluxTest {
     @Test
     public void testCreate() throws InterruptedException {
         MyEventProcesser<String> myEventProcesser = new MyEventProcesser<>();
-        Flux.create(emitter -> myEventProcesser.register(new MyEventListener<String>() {
-            @Override
-            public void onDataChunk(MyEvent<String> event) {
-                emitter.next(event);
-            }
+        Flux.create(emitter -> {
+            myEventProcesser.register(new MyEventListener<String>() {
+                @Override
+                public void onDataChunk(MyEvent<String> event) {
+                    emitter.next(event);
+                }
 
-            @Override
-            public void processComplete() {
-                emitter.complete();
-            }
-        })).subscribe(PrintUtil::println);// 这时候还没有任何事件产生；
+                @Override
+                public void processComplete() {
+                    emitter.complete();
+                }
+            });
+
+            emitter.onRequest(n -> { // n subscribe.requset时调用
+                List<String> messages = getHistory(n);
+                messages.forEach(PrintUtil::println);
+            });
+        }).subscribe(PrintUtil::println, PrintUtil::println); // 这时候还没有任何事件产生；
 
         for (int i = 0; i < 20; i++) {  // 6
             TimeUnit.MILLISECONDS.sleep(ThreadLocalRandom.current().nextInt(1000));
             myEventProcesser.newEvent(new MyEvent<>(new Date(), "Event" + i));
         }
         myEventProcesser.processComplete();
+    }
 
+    @Test
+    public void testPush() throws InterruptedException {
+        MyEventProcesser<String> myEventProcesser = new MyEventProcesser<>();
+        Flux.push(emitter -> {
+            myEventProcesser.register(new MyEventListener<String>() {
+                @Override
+                public void onDataChunk(MyEvent<String> event) {
+                    emitter.next(event);
+                }
+
+                @Override
+                public void processComplete() {
+                    emitter.complete();
+
+                }
+            });
+
+            emitter.onRequest(n -> { // n
+                List<String> messages = getHistory(n);
+                messages.forEach(PrintUtil::println);
+            });
+        }).subscribe(PrintUtil::println);// 这时候还没有任何事件产生；
+
+        for (int i = 0; i < 20; i++) {  // 6
+            TimeUnit.MILLISECONDS.sleep(ThreadLocalRandom.current().nextInt(1000));
+            myEventProcesser.newEvent(new MyEvent<>(new Date(), "Event" + i));
+        }
+        myEventProcesser.processComplete();
+    }
+
+    public List<String> getHistory(Long n) {
+        return Arrays.asList("History1", "History2", "History3");
     }
 }
