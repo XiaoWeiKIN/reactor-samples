@@ -4,7 +4,7 @@ import org.junit.Test;
 import reactor.core.publisher.Flux;
 import wangxw.listener.MyEvent;
 import wangxw.listener.MyEventListener;
-import wangxw.listener.MyEventProcesser;
+import wangxw.listener.MyEventProcessor;
 import wangxw.utils.PrintUtil;
 
 import java.util.Arrays;
@@ -44,7 +44,7 @@ public class FluxTest {
 
     @Test
     public void testCreate() throws InterruptedException {
-        MyEventProcesser<String> myEventProcesser = new MyEventProcesser<>();
+        MyEventProcessor<String> myEventProcesser = new MyEventProcessor<>();
         Flux.create(emitter -> {
             myEventProcesser.register(new MyEventListener<String>() {
                 @Override
@@ -73,7 +73,7 @@ public class FluxTest {
 
     @Test
     public void testPush() throws InterruptedException {
-        MyEventProcesser<String> myEventProcesser = new MyEventProcesser<>();
+        MyEventProcessor<String> myEventProcesser = new MyEventProcessor<>();
         Flux.push(emitter -> {
             myEventProcesser.register(new MyEventListener<String>() {
                 @Override

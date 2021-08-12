@@ -1,5 +1,6 @@
 package wangxw.listener;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -35,7 +36,7 @@ public class MyEvent<T> {
     @Override
     public String toString() {
         return "MyEvent{" +
-                "timestamp=" + timestamp +
+                "timestamp=" + timestamp.getTime() +
                 ", message=" + message +
                 '}';
     }

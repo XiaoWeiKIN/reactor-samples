@@ -8,11 +8,11 @@ import java.util.List;
  * @DateTime: 2021/8/8
  * @Description: TODO
  */
-public class MyEventProcesser<T> {
+public class MyEventProcessor<T> {
 
     private List<MyEventListener<T>> listeners;
 
-    public MyEventProcesser() {
+    public MyEventProcessor() {
         this.listeners = new ArrayList<>();
     }
 

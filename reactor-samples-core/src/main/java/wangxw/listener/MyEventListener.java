@@ -1,6 +1,5 @@
 package wangxw.listener;
 
-import java.util.List;
 
 /**
  * @Author: wangxw
