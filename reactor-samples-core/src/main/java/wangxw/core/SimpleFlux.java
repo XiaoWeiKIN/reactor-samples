@@ -2,6 +2,7 @@ package wangxw.core;
 
 import org.reactivestreams.Publisher;
 
+import java.util.concurrent.Callable;
 import java.util.function.Function;
 
 /**
@@ -16,8 +17,12 @@ public abstract class SimpleFlux<T> implements Publisher<T> {
     public static <T> SimpleFlux<T> just(T... t) {
         return new SimpleFluxArray<>(t);
     }
+//    public static <T> SimpleFluxCreate<T> crete(Callable<T> callable){
+//
+//    }
 
     public <V> SimpleFlux<V> map(Function<? super T, ? extends V> mapper) {   // 1
         return new SimpleFluxMap<>(this, mapper); // 2
     }
+
 }

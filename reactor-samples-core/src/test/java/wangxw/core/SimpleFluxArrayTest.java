@@ -11,8 +11,11 @@ public class SimpleFluxArrayTest {
 
     @Test
     public void justTest() {
-        SimpleFlux.just(1, 2, 3, 4, 5).subscribe(new Subscriber<Integer>() { // 1
 
+
+        SimpleFlux<Integer> flux = SimpleFlux.just(1, 2, 3, 4, 5);
+
+        flux.subscribe(new Subscriber<Integer>() { // 1
             @Override
             public void onSubscribe(Subscription s) {
                 System.out.println("onSubscribe");
@@ -34,6 +37,8 @@ public class SimpleFluxArrayTest {
                 System.out.println("onComplete");
             }
         });
+
+
     }
 
     @Test
@@ -41,26 +46,26 @@ public class SimpleFluxArrayTest {
         SimpleFlux.just(1, 2, 3, 4, 5)
                 .map(e -> e + 1)
                 .subscribe(new Subscriber<Integer>() {
-            @Override
-            public void onSubscribe(Subscription subscription) {
-                System.out.println("onSubscribe");
-                subscription.request(6);   // 2
-            }
+                    @Override
+                    public void onSubscribe(Subscription subscription) {
+                        System.out.println("onSubscribe");
+                        subscription.request(6);   // 2
+                    }
 
-            @Override
-            public void onNext(Integer integer) {
-                System.out.println("onNext:" + integer);
-            }
+                    @Override
+                    public void onNext(Integer integer) {
+                        System.out.println("onNext:" + integer);
+                    }
 
-            @Override
-            public void onError(Throwable throwable) {
+                    @Override
+                    public void onError(Throwable throwable) {
 
-            }
+                    }
 
-            @Override
-            public void onComplete() {
-                System.out.println("onComplete");
-            }
-        });
+                    @Override
+                    public void onComplete() {
+                        System.out.println("onComplete");
+                    }
+                });
     }
 }

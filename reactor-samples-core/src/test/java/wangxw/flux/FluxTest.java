@@ -1,7 +1,9 @@
 package wangxw.flux;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 import wangxw.listener.MyEvent;
 import wangxw.listener.MyEventListener;
 import wangxw.listener.MyEventProcessor;
@@ -13,11 +15,14 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
+import static reactor.core.publisher.Sinks.EmitFailureHandler.FAIL_FAST;
+
 /**
  * @Author: wangxw
  * @Date: 2021/08/05
  * @Description:
  */
+@Slf4j
 public class FluxTest {
     /**
      * 同步创建
@@ -45,7 +50,8 @@ public class FluxTest {
     @Test
     public void testCreate() throws InterruptedException {
         MyEventProcessor<String> myEventProcesser = new MyEventProcessor<>();
-        Flux.create(emitter -> {
+        Flux<MyEvent<String>> flux = Flux.<MyEvent<String>>create(emitter -> {
+            PrintUtil.println("Create");
             myEventProcesser.register(new MyEventListener<String>() {
                 @Override
                 public void onDataChunk(MyEvent<String> event) {
@@ -62,7 +68,10 @@ public class FluxTest {
                 List<String> messages = getHistory(n);
                 messages.forEach(PrintUtil::println);
             });
-        }).subscribe(PrintUtil::println, PrintUtil::println); // 这时候还没有任何事件产生；
+        }).doOnSubscribe(x -> PrintUtil.println("doOnSubscribe")).publish().refCount();
+
+        flux.subscribe(x -> PrintUtil.println("S1 " + x.toString()), PrintUtil::println); // 这时候还没有任何事件产生；
+        flux.subscribe(x -> PrintUtil.println("S2 " + x.toString()), PrintUtil::println); // 这时候还没有任何事件产生；
 
         for (int i = 0; i < 20; i++) {  // 6
             TimeUnit.MILLISECONDS.sleep(ThreadLocalRandom.current().nextInt(1000));
@@ -100,6 +109,27 @@ public class FluxTest {
         }
         myEventProcesser.processComplete();
     }
+
+    @Test
+    public void hot() {
+        Sinks.Many<String> hotSource = Sinks.unsafe().many().multicast().directBestEffort();
+
+        Flux<String> hotFlux = hotSource.asFlux().map(String::toUpperCase);
+
+        hotFlux.subscribe(d -> System.out.println("Subscriber 1 to Hot Source: " + d));
+
+        hotSource.emitNext("blue", FAIL_FAST);
+        hotSource.tryEmitNext("green").orThrow();
+
+        hotFlux.subscribe(d -> System.out.println("Subscriber 2 to Hot Source: " + d));
+
+        hotSource.emitNext("orange", FAIL_FAST);
+        hotSource.emitNext("purple", FAIL_FAST);
+        hotSource.emitComplete(FAIL_FAST);
+    }
+
+
+
 
     public List<String> getHistory(Long n) {
         return Arrays.asList("History1", "History2", "History3");

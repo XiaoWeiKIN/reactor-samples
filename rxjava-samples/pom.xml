@@ -9,18 +9,17 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>reactor-samples-core</artifactId>
+    <artifactId>rxjava-samples</artifactId>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
     </properties>
-
     <dependencies>
         <dependency>
-            <groupId>org.twitter4j</groupId>
-            <artifactId>twitter4j-stream</artifactId>
-            <version>4.0.7</version>
+            <groupId>io.reactivex.rxjava3</groupId>
+            <artifactId>rxjava</artifactId>
+            <version>3.1.1</version>
         </dependency>
     </dependencies>
 
