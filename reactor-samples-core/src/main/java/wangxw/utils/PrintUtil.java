@@ -18,4 +18,8 @@ public class PrintUtil {
         System.out.println(String.format(format0.format(new Date()) + " [Thread-Name-%s], %s",
                 Thread.currentThread().getName(), x));
     }
+
+    public static String println(Date date) {
+        return format0.format(new Date());
+    }
 }

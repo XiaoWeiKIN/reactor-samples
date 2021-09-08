@@ -6,12 +6,15 @@ import org.junit.Test;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 import wangxw.utils.PrintUtil;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -184,11 +187,10 @@ public class OperatorTest {
         });
         Flux<String> flux2 = Flux.interval(Duration.ofMillis(500)).map(x -> "p2: " + x);
 
-        Flux<String> mergeFlux = Flux.mergeDelayError(1, flux2,flux1);
+        Flux<String> mergeFlux = Flux.mergeDelayError(1, flux1, flux2);
 
         mergeFlux.subscribe(log::info, e -> log.error("err", e));
         TimeUnit.SECONDS.sleep(2);
-
     }
 
     @Test
@@ -200,6 +202,58 @@ public class OperatorTest {
         mergeFlux.subscribe(log::info);
 
         TimeUnit.SECONDS.sleep(2);
+    }
+
+    @Test
+    public void zipTest() throws InterruptedException {
+        Flux<String> flux1 = Flux.interval(Duration.ofMillis(300)).map(x -> "p1: " + x);
+        Flux<String> flux2 = Flux.interval(Duration.ofMillis(500)).map(x -> "p2: " + x);
+        Flux<Tuple2<String, String>> zipFlux = Flux.zip(flux1, flux2);
+        zipFlux.subscribe(x -> log.info(x.toString()));
+
+        TimeUnit.SECONDS.sleep(2);
+    }
+
+    @Test
+    public void concatTest () throws InterruptedException {
+        Flux<String> flux1 = Flux.just("1","2","3").delayElements(Duration.ofSeconds(1));
+        Flux<String> flux2 = Flux.just("4","5","6");
+
+        Flux<String> flux = Flux.concat(flux1, flux2);
+
+        flux.subscribe(log::info);
+
+        TimeUnit.SECONDS.sleep(3);
+    }
+
+    @Test
+    public void cartesianTest () {
+        Flux<Integer> oneToEight = Flux.range(1, 8);
+        Flux<String> ranks = oneToEight.map(Objects::toString);
+        Flux<String> files = oneToEight.map(x -> 'a' + x - 1)
+                .map(ascii -> (char) ascii.intValue())
+                .map(ch -> Character.toString(ch));
+
+        Flux<String> squares = files
+                .flatMap(file -> ranks.map(rank -> file + rank));
+
+        squares.subscribe(log::info);
+    }
+
+
+    @Test
+    public void deferTest() throws InterruptedException {
+        Flux<String> flux1 = Flux.just(PrintUtil.println(new Date()));
+
+        Flux<String> flux2 = Flux.defer(() -> Flux.just(PrintUtil.println(new Date())));
+
+        flux1.subscribe(x -> log.info("s1: " + x));
+        flux2.subscribe(x -> log.info("s2: " + x));
+
+        TimeUnit.SECONDS.sleep(3);
+
+        flux1.subscribe(x -> log.info("s3: " + x));
+        flux2.subscribe(x -> log.info("s4: " + x));
     }
 
     @Test
