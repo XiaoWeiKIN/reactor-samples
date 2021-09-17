@@ -25,7 +25,8 @@ public class PersonDao {
      * @return
      */
     public Flux<Person> rxListPeople() {
-        return Flux.fromIterable(query("select * from people"));
+        return Flux.defer(() ->
+                Flux.fromIterable(query("select * from people")));
     }
 
     private List<Person> query(String sql) {

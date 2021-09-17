@@ -1,14 +1,12 @@
 package wangxw.service;
 
 import lombok.extern.slf4j.Slf4j;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import wangxw.entity.Flight;
 import wangxw.entity.Passenger;
 import wangxw.entity.Ticket;
 
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -83,7 +81,7 @@ public class TicketService {
      * @param ticket
      * @return
      */
-    public boolean sendEmail(Ticket ticket) throws IOException {
+    public boolean sendEmail(Ticket ticket) {
         try {
             TimeUnit.SECONDS.sleep(1);
         } catch (InterruptedException e) {

@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -77,7 +78,8 @@ public class Block2FluxTest {
                 .subscribeOn(Schedulers.boundedElastic())
                 .timeout(Duration.ofSeconds(3));
 
-//        Mono<Ticket> ticket = flight.zipWith(passenger, (f, p) -> ticketService.bookTicket(f, p));
+//        Mono<Ticket> ticket = flight.zipWith(passenger,
+//                (f, p) -> ticketService.bookTicket(f, p));
 //        ticket.subscribe(ticketService::sendEmail);
 
         Mono<Ticket> ticket = flight
@@ -96,7 +98,7 @@ public class Block2FluxTest {
         for (Ticket ticket : tickets) {
             try {
                 ticketService.sendEmail(ticket);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 log.warn("Failed to send {}", ticket, e);
                 faitures.add(ticket);
             }
@@ -136,6 +138,25 @@ public class Block2FluxTest {
                 .blockLast();
         long end = System.currentTimeMillis() - start;
         System.out.println(end);
+    }
+
+@Test
+    public void f(){
+        CompletableFuture<String> future = CompletableFuture.supplyAsync(() -> {
+            try {
+                TimeUnit.SECONDS.sleep(30);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return "zhangsan";
+        });
+
+        future.cancel(true);
+
+        future.whenComplete((r,t)->{
+            System.out.println(t);
+            System.out.println(r);
+        });
     }
 
 }
