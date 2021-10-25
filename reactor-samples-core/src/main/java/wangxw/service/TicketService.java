@@ -91,7 +91,7 @@ public class TicketService {
         return true;
     }
 
-    ExecutorService pool = Executors.newFixedThreadPool(3);
+    ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
 
     public Future<Boolean> sendEmailAsync(Ticket ticket) {
@@ -99,6 +99,7 @@ public class TicketService {
     }
 
     public Mono<Boolean> rxSendEmail(Ticket ticket){
+        // 将阻塞的源包装为反应式
         return Mono.fromCallable(() -> sendEmail(ticket));
     }
 

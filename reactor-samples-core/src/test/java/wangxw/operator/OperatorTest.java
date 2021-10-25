@@ -133,8 +133,9 @@ public class OperatorTest {
         Function<String, Publisher<String>> mapper = s -> Flux.just(s.toUpperCase().split(""));
 
         Flux.just("baeldung", ".", "com")
-                .flatMap(mapper)
                 .log()
+                .flatMap(mapper)
+//                .log()
                 .subscribe(log::info);
     }
 
@@ -261,6 +262,9 @@ public class OperatorTest {
         Mono<RuntimeException> mono = Mono.fromCallable(() -> new RuntimeException("xxx"));
         mono.subscribe(PrintUtil::println);
     }
+
+
+
 
     static class User {
 

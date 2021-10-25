@@ -6,10 +6,13 @@ import org.junit.Test;
 import reactor.core.Disposable;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.SignalType;
 import reactor.util.retry.Retry;
 
+import java.io.IOException;
 import java.time.Duration;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -76,7 +79,9 @@ public class ErrorHandleOperatorTest {
         Flux<String> flux = Flux.just("key1", "key2")
                 .flatMap(key -> callExternalService(key)
                         .onErrorMap(e -> new BusinessException("catch and rethrow")));
-        flux.subscribe(log::info, e -> log.error("error", e));
+        List<String> strings = flux.buffer().blockLast();
+        strings.forEach(log::info);
+//        flux.subscribe(log::info, e -> log.error("error", e));
     }
 
     @Test
@@ -88,13 +93,32 @@ public class ErrorHandleOperatorTest {
     }
 
     @Test
-    public void staticValueFallbackc() {
+    public void onErrorContinueTest() {
         Flux<String> flux = Flux.just(10, 1, 2)
                 .map(this::doSomethingDangerous)
                 .onErrorContinue((e, x) -> {
                     log.error("error <{}>", x, e);
 
                 });
+        flux.subscribe(log::info, e -> log.error("err", e));
+    }
+
+    @Test
+    public void onErrorContinueTest1() {
+        Flux<String> flux = Flux.just(10, 1, 2).doOnNext(System.out::println)
+                .flatMap(x -> {
+                    if (x == 10) {
+                        try {
+                            String s = hasCheckException(x);
+                            return Mono.just(s);
+                        } catch (IOException e) {
+                            return Flux.error(Exceptions.propagate(e));
+                        }
+                    }
+                    return Mono.just(x + "");
+                })
+                .onErrorContinue((e, x) -> log.error("error <{}>", x, e));
+
         flux.subscribe(log::info, e -> log.error("err", e));
     }
 
@@ -135,7 +159,7 @@ public class ErrorHandleOperatorTest {
     @Test
     @SneakyThrows
     public void restryWhen1() {
-        Flux.<String>error( new RuntimeException("boom"))
+        Flux.<String>error(new RuntimeException("boom"))
                 .doOnError(e -> System.err.println("on error"))
 //                .retryWhen(Retry.from(companion ->
 //                        companion
@@ -165,9 +189,48 @@ public class ErrorHandleOperatorTest {
 
     }
 
+    /**
+     * 连续的异常
+     */
+    @Test
+    public void testEx() {
+        Flux.just(1, 2, 3, 4)
+                .flatMap(x -> rxEx1(x)
+                        .flatMap(this::callEx1)
+                        .doOnNext(res -> log.info("success <{}>", res)))
+                .onErrorContinue((throwable, o) -> log.error("ex1", throwable))
+                .buffer()
+                .blockLast();
+    }
+
+    public Mono<String> rxEx1(int i) {
+        return Mono.fromCallable(() -> ex1(i));
+    }
+
+    public String ex1(int i) {
+        if (i == 1) {
+            throw new BusinessException("----1---");
+        }
+        return i + "";
+    }
+
+    public Mono<String> callEx1(String i) {
+        if (i.equals("2")) {
+            return Mono.error(new RuntimeException("---2---"));
+        }
+        return Mono.just(i);
+    }
+
     public String doSomethingDangerous(int i) {
         if (i == 10) {
             throw new BusinessException();
+        }
+        return i + "";
+    }
+
+    public String hasCheckException(int i) throws IOException {
+        if (i == 10) {
+            throw new IOException();
         }
         return i + "";
     }

@@ -115,7 +115,7 @@ public class Block2FluxTest {
         List<Ticket> failures = tasks.stream().flatMap(pair -> {
             try {
                 Future<Boolean> future = pair.getRight();
-                future.get(1, TimeUnit.SECONDS);
+                future.get(1, TimeUnit.SECONDS); // 1s 的发送时间
                 return Stream.empty();
             } catch (Exception e) {
                 Ticket ticket = pair.getLeft();
@@ -126,22 +126,28 @@ public class Block2FluxTest {
     }
 
     @Test
-    public void rx() {
+    public void rx() throws InterruptedException {
         long start = System.currentTimeMillis();
-        Flux.fromIterable(tickets)
-                .flatMap(ticket -> ticketService.rxSendEmail(ticket)
-                        .flatMap(response -> Mono.<Ticket>empty())
-                        .doOnError(e -> log.warn("Failed to send {}", ticket, e))
-                        .onErrorReturn(ticket)
-                        .subscribeOn(Schedulers.boundedElastic()))
-                .buffer()
-                .blockLast();
+        Flux.fromIterable(this.tickets)
+                .flatMap(ticket ->
+                        ticketService.rxSendEmail(ticket)
+//                                .flatMap(response -> Mono.<Ticket>empty())
+                                .ignoreElement()
+                                .ofType(Ticket.class)
+                                .doOnError(e -> log.warn("Failed to send {}", ticket, e))
+                                .onErrorReturn(ticket)
+                                .subscribeOn(Schedulers.boundedElastic())
+                                ,2)
+                .subscribe(ticket -> {});
+//                .buffer()
+//                .blockLast();
         long end = System.currentTimeMillis() - start;
+        TimeUnit.SECONDS.sleep(5);
         System.out.println(end);
     }
 
-@Test
-    public void f(){
+    @Test
+    public void f() {
         CompletableFuture<String> future = CompletableFuture.supplyAsync(() -> {
             try {
                 TimeUnit.SECONDS.sleep(30);
@@ -153,7 +159,7 @@ public class Block2FluxTest {
 
         future.cancel(true);
 
-        future.whenComplete((r,t)->{
+        future.whenComplete((r, t) -> {
             System.out.println(t);
             System.out.println(r);
         });
