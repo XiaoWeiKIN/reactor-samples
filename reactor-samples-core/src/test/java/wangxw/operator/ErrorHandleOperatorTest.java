@@ -197,17 +197,26 @@ public class ErrorHandleOperatorTest {
         Flux.just(1, 2, 3, 4)
                 .flatMap(x -> rxEx1(x)
                         .flatMap(this::callEx1)
+                        .onErrorMap(throwable -> new RuntimeException("<<<--" + x))
+//                        .onErrorResume(throwable -> Mono.just(x+""))
+//                        .onErrorReturn(x + "")
                         .doOnNext(res -> log.info("success <{}>", res)))
-                .onErrorContinue((throwable, o) -> log.error("ex1", throwable))
+                .onErrorContinue((throwable, o) -> log.error("ex1 {}", throwable, o))
                 .buffer()
                 .blockLast();
+    }
+
+
+    @Test
+    public void testEx1() {
+
     }
 
     public Mono<String> rxEx1(int i) {
         return Mono.fromCallable(() -> ex1(i));
     }
 
-    public String ex1(int i) {
+    public String ex1(int i) throws BusinessException {
         if (i == 1) {
             throw new BusinessException("----1---");
         }
